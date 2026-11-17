@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador Examen Ingreso ESPOL · Matemáticas y Física</title>
+<meta name="description" content="Practica con exámenes de 20 preguntas y 1 hora 30 minutos, armados con preguntas reales de exámenes de ingreso de Matemáticas y Física.">
+<style>
+  :root {
+    --tinta: #14213D; --suave: #5A6478; --linea: #DDE2EA; --fondo: #F4F6FA; --papel: #FFFFFF;
+    --azul: #0B3D6E; --azul2: #1E5FA8; --ambar: #F2A20C; --verde: #1B8A5A; --verde-f: #E4F4EC; --rojo: #C8372D; --rojo-f: #FBE9E7;
+    --radio: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif; color: var(--tinta); background: var(--fondo); line-height: 1.45; }
+  h1, h2, h3 { font-family: Georgia, "DejaVu Serif", serif; line-height: 1.15; margin: 0; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
+  .ancho { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- inicio ---------- */
+  .portada { background: var(--azul); color: #fff; padding: 56px 0 48px; }
+  .portada .mini { font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; opacity: .75; font-weight: 700; }
+  .portada h1 { font-size: clamp(2rem, 5.5vw, 3.4rem); margin: 14px 0 16px; max-width: 20ch; }
+  .portada p { font-size: 1.1rem; max-width: 56ch; margin: 0; opacity: .92; }
+  .datos { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 28px; font-weight: 600; }
+  .datos span b { color: var(--ambar); font-size: 1.35rem; margin-right: 6px; font-family: Georgia, serif; }
+  .materias { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .materia { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 26px; text-align: left; display: flex; flex-direction: column; gap: 10px;
+             box-shadow: 0 10px 30px -18px rgba(20,33,61,.45); transition: transform .15s, box-shadow .15s, border-color .15s; }
+  .materia:hover, .materia:focus-visible { transform: translateY(-3px); border-color: var(--azul2); box-shadow: 0 16px 36px -18px rgba(20,33,61,.55); outline: none; }
+  .materia h2 { font-size: 1.6rem; color: var(--azul); }
+  .materia .temas { color: var(--suave); font-size: .92rem; }
+  .materia .ir { margin-top: 8px; font-weight: 700; color: var(--azul2); }
+  .seccion { margin: 40px auto; }
+  .seccion h3 { font-size: 1.2rem; margin-bottom: 12px; }
+  .pasos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; padding: 0; margin: 0; list-style: none; counter-reset: paso; }
+  .pasos li { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 16px 18px; color: var(--suave); font-size: .95rem; counter-increment: paso; }
+  .pasos li::before { content: counter(paso); display: block; font-family: Georgia, serif; font-size: 1.5rem; color: var(--ambar); font-weight: 700; }
+  .pasos b { color: var(--tinta); }
+  table.intentos { width: 100%; border-collapse: collapse; background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); overflow: hidden; font-size: .95rem; }
+  .intentos th, .intentos td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--linea); }
+  .intentos th { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+  .intentos tr:last-child td { border-bottom: 0; }
+  .aviso { margin-top: 24px; background: #FFF6DF; border: 1px solid #F1D38A; border-radius: var(--radio); padding: 16px 18px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .pie { color: var(--suave); font-size: .85rem; padding: 30px 0 50px; }
+
+  /* ---------- botones ---------- */
+  .btn { border: 1px solid var(--linea); background: var(--papel); border-radius: 10px; padding: 11px 18px; font-weight: 700; }
+  .btn:hover { border-color: var(--azul2); }
+  .btn.fuerte { background: var(--azul); color: #fff; border-color: var(--azul); }
+  .btn.fuerte:hover { background: var(--azul2); }
+  .btn.ambar { background: var(--ambar); border-color: var(--ambar); color: #2A1B00; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  :focus-visible { outline: 3px solid var(--ambar); outline-offset: 2px; }
+
+  /* ---------- examen ---------- */
+  .barra { position: sticky; top: 0; z-index: 10; background: var(--azul); color: #fff; }
+  .barra .ancho { display: flex; align-items: center; gap: 14px; padding-top: 10px; padding-bottom: 10px; }
+  .barra .tit { font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .salir { background: transparent; color: #fff; border-color: rgba(255,255,255,.45); padding: 7px 12px; font-size: .9rem; white-space: nowrap; }
+  .salir .corto { display: none; }
+  .salir:hover { background: rgba(255,255,255,.14); border-color: #fff; }
+  .reloj { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 1.25rem; background: rgba(255,255,255,.14); padding: 6px 14px; border-radius: 999px; }
+  .reloj.poco { background: var(--rojo); }
+  .progreso { height: 4px; background: rgba(255,255,255,.2); }
+  .progreso i { display: block; height: 100%; background: var(--ambar); width: 0; transition: width .3s; }
+  .examen { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 22px; padding-top: 22px; padding-bottom: 60px; align-items: start; }
+  .hoja { min-width: 0; background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 22px; }
+  .cab-preg { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .num { background: var(--azul); color: #fff; font-weight: 800; border-radius: 999px; padding: 5px 14px; }
+  .tema { color: var(--suave); font-size: .9rem; }
+  .marcar { margin-left: auto; font-size: .9rem; padding: 7px 12px; }
+  .marcar[aria-pressed="true"] { background: #FFF1CC; border-color: var(--ambar); }
+  .lienzo { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .lienzo img { width: 100%; height: auto; display: block; max-width: 800px; }
+  .desliza { display: none; color: var(--suave); font-size: .8rem; margin: 6px 0 0; }
+  .opciones { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+  .opcion { border: 2px solid var(--linea); background: var(--papel); border-radius: 12px; padding: 14px 0; font-weight: 800; font-size: 1.2rem; }
+  .opcion:hover { border-color: var(--azul2); }
+  .opcion[aria-checked="true"] { background: var(--azul); border-color: var(--azul); color: #fff; }
+  .nav-preg { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+  .lado { position: sticky; top: 74px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 16px; }
+  .panel h3 { font-size: .78rem; font-family: inherit; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); margin-bottom: 10px; }
+  .mapa { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .mapa button { aspect-ratio: 1; border: 1.5px solid var(--linea); background: var(--papel); border-radius: 9px; font-weight: 700; padding: 0; position: relative; }
+  .mapa button.resp { background: #DCE9F8; border-color: #9DBDE3; }
+  .mapa button.act { outline: 3px solid var(--azul); outline-offset: 1px; }
+  .mapa button.marc::after { content: ""; position: absolute; top: 3px; right: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--ambar); }
+  .leyenda { font-size: .8rem; color: var(--suave); margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+
+  /* ---------- resultado ---------- */
+  .resultado { padding: 34px 0 60px; }
+  .nota { background: var(--azul); color: #fff; border-radius: var(--radio); padding: 30px; display: grid; grid-template-columns: auto 1fr; gap: 30px; align-items: center; }
+  .nota .grande { font-family: Georgia, serif; font-size: clamp(3.4rem, 10vw, 5.5rem); font-weight: 700; line-height: 1; color: var(--ambar); }
+  .nota .grande small { font-size: .35em; color: #fff; opacity: .8; }
+  .nota h2 { font-size: 1.6rem; margin-bottom: 8px; }
+  .nota p { margin: 4px 0; opacity: .92; }
+  .fichas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0 26px; }
+  .ficha { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px 16px; }
+  .ficha b { display: block; font-size: 1.5rem; font-family: Georgia, serif; }
+  .ficha span { color: var(--suave); font-size: .85rem; }
+  .por-tema { display: grid; gap: 8px; margin-bottom: 28px; }
+  .fila-tema { display: grid; grid-template-columns: minmax(120px, 240px) 1fr 52px; gap: 12px; align-items: center; font-size: .93rem; }
+  .fila-tema .pista { height: 10px; background: var(--linea); border-radius: 99px; overflow: hidden; }
+  .fila-tema .pista i { display: block; height: 100%; background: var(--verde); }
+  .fila-tema b { text-align: right; font-variant-numeric: tabular-nums; }
+  .clave { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-bottom: 26px; }
+  .clave a { display: block; text-decoration: none; color: inherit; border-radius: 10px; padding: 8px 10px; font-size: .9rem; border: 1px solid; font-variant-numeric: tabular-nums; }
+  .clave a.ok { background: var(--verde-f); border-color: #A9D9C0; }
+  .clave a.mal { background: var(--rojo-f); border-color: #EDB8B2; }
+  .clave a.nada { background: #EEF0F4; border-color: var(--linea); }
+  .clave a b { display: block; }
+  .revision { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); margin-bottom: 14px; overflow: hidden; scroll-margin-top: 12px; }
+  .revision > header { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--linea); }
+  .revision.ok > header { background: var(--verde-f); } .revision.mal > header { background: var(--rojo-f); } .revision.nada > header { background: #EEF0F4; }
+  .sello { font-weight: 800; }
+  .revision.ok .sello { color: var(--verde); } .revision.mal .sello { color: var(--rojo); } .revision.nada .sello { color: var(--suave); }
+  .revision .cuerpo { padding: 18px; }
+
+  .letras { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .letras span { border: 2px solid var(--linea); border-radius: 10px; padding: 6px 14px; font-weight: 800; }
+  .letras .correcta { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .letras .tuya-mal { background: var(--rojo-f); border-color: var(--rojo); color: var(--rojo); text-decoration: line-through; }
+  details.sol summary { cursor: pointer; font-weight: 700; color: var(--azul2); padding: 6px 0; }
+  details.sol .lienzo { margin-top: 10px; }
+  .origen { color: var(--suave); font-size: .82rem; margin-top: 10px; }
+  .acciones { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0; }
+
+  /* ---------- diálogo ---------- */
+  dialog { border: 0; border-radius: var(--radio); padding: 26px; max-width: 440px; width: calc(100% - 32px); box-shadow: 0 30px 80px -20px rgba(0,0,0,.5); }
+  dialog::backdrop { background: rgba(20,33,61,.55); }
+  dialog h3 { font-size: 1.3rem; margin-bottom: 10px; }
+  dialog p { color: var(--suave); margin: 0 0 18px; }
+  dialog .acciones { margin: 0; justify-content: flex-end; }
+
+  @media (max-width: 860px) {
+    .examen { grid-template-columns: minmax(0, 1fr); }
+    .lado { position: static; }
+    .mapa { grid-template-columns: repeat(10, 1fr); }
+    .hoja { padding: 16px; }
+    .nota { grid-template-columns: 1fr; gap: 12px; text-align: left; }
+  }
+  @media (max-width: 640px) {
+    .lienzo img { width: 640px; max-width: none; }      /* en celular la pregunta se ve a tamaño legible y se desliza de lado */
+    .desliza { display: block; }
+    .hoja { padding: 14px 12px; } .revision .cuerpo { padding: 14px 12px; }
+  }
+  @media (max-width: 480px) {
+    .opciones { gap: 6px; } .opcion { padding: 12px 0; }
+    .barra .tit { display: none; } .barra .ancho { justify-content: space-between; gap: 8px; padding-left: 12px; padding-right: 12px; }
+    .salir .largo { display: none; } .salir .corto { display: inline; }
+    .reloj { font-size: 1.1rem; padding: 6px 10px; } #btn-entregar { padding: 10px 12px; }
+    .fila-tema { grid-template-columns: 1fr 44px; } .fila-tema .pista { grid-column: 1 / -1; order: 3; }
+  }
+  @media print { .barra, .acciones, .lado { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ============ INICIO ============ -->
+<main id="vista-inicio">
+  <section class="portada">
+    <div class="ancho">
+      <div class="mini">Matemáticas · Física</div>
+      <h1>Simulador Examen Ingreso ESPOL</h1>
+      <p>Practica como si fuera el día del examen: cada simulacro se arma al azar con preguntas reales de exámenes anteriores, en el mismo orden de temas que los exámenes desde 2024.</p>
+      <div class="datos"><span><b>20</b>preguntas</span><span><b>1 h 30 min</b>de tiempo</span><span><b id="total-banco">—</b>preguntas en el banco</span></div>
+    </div>
+  </section>
+  <div class="ancho">
+    <div class="aviso" id="aviso-pendiente" hidden>
+      <span>Tienes un simulacro de <b id="pend-materia"></b> sin terminar. El tiempo siguió corriendo: te quedan <b id="pend-tiempo"></b>.</span>
+      <span><button class="btn fuerte" id="btn-continuar">Continuar</button> <button class="btn" id="btn-descartar">Descartarlo</button></span>
+    </div>
+    <section class="seccion">
+      <h3>Indicaciones para el examen</h3>
+      <ol class="pasos">
+        <li><b>20 preguntas de opción múltiple.</b> Cada una tiene cinco opciones (A a E) y una sola respuesta correcta.</li>
+        <li><b>Tienes 1 hora 30 minutos.</b> El reloj no se detiene; cuando llega a cero, el examen se entrega solo.</li>
+        <li><b>La dificultad va subiendo.</b> Las primeras preguntas son las más fáciles y las últimas las más difíciles.</li>
+        <li><b>Responde en el orden que quieras.</b> Puedes saltar preguntas, marcarlas para revisar y cambiar tu respuesta antes de entregar.</li>
+        <li><b>Cada acierto vale 5 puntos.</b> La nota es sobre 100. Las preguntas en blanco no suman y los errores no restan.</li>
+        <li><b>Al entregar ves tu calificación.</b> Con la respuesta correcta y la solución paso a paso de cada pregunta.</li>
+        <li><b>Puedes salir cuando quieras.</b> Si vuelves a la página principal durante el examen, ese simulacro se pierde.</li>
+        <li><b>Prepárate como en el examen real.</b> Ten a la mano lápiz y papel, y busca un lugar sin interrupciones.</li>
+      </ol>
+    </section>
+    <section class="seccion">
+      <h3>¿Qué examen quieres tomar?</h3>
+      <div class="materias">
+        <button class="materia" data-materia="matematicas">
+          <h2>Matemáticas</h2>
+          <div class="temas">Lógica y conjuntos, números reales, funciones, trigonometría, geometría, matrices, vectores…</div>
+          <div class="ir">Empezar examen de Matemáticas →</div>
+        </button>
+        <button class="materia" data-materia="fisica">
+          <h2>Física</h2>
+          <div class="temas">Mediciones y unidades, vectores, cinemática, movimiento en el plano y dinámica.</div>
+          <div class="ir">Empezar examen de Física →</div>
+        </button>
+      </div>
+    </section>
+    <section class="seccion" id="sec-intentos" hidden>
+      <h3>Tus últimos simulacros</h3>
+      <table class="intentos"><thead><tr><th>Fecha</th><th>Materia</th><th>Aciertos</th><th>Calificación</th><th>Tiempo</th></tr></thead><tbody id="tabla-intentos"></tbody></table>
+    </section>
+    <p class="pie">Las preguntas provienen de exámenes de ingreso y de nivelación de años anteriores. Tus respuestas y tu historial se guardan solo en este dispositivo.</p>
+  </div>
+</main>
+
+<!-- ============ EXAMEN ============ -->
+<div id="vista-examen" hidden>
+  <div class="barra">
+    <div class="ancho">
+      <button class="btn salir" id="btn-salir" aria-label="Ir a la página principal">← <span class="largo">Página principal</span><span class="corto">Inicio</span></button>
+      <div class="tit" id="ex-titulo"></div>
+      <div class="reloj" id="reloj" role="timer" aria-label="Tiempo restante">1:30:00</div>
+      <button class="btn ambar" id="btn-entregar">Entregar</button>
+    </div>
+    <div class="progreso"><i id="barra-progreso"></i></div>
+  </div>
+  <div class="ancho examen">
+    <section class="hoja">
+      <div class="cab-preg">
+        <span class="num" id="p-num"></span><span class="tema" id="p-tema"></span>
+        <button class="btn marcar" id="btn-marcar" aria-pressed="false">Marcar para revisar</button>
+      </div>
+      <div class="lienzo"><img id="p-img" alt=""></div>
+      <p class="desliza">↔ Desliza la pregunta hacia los lados para verla completa.</p>
+      <div class="opciones" id="p-opciones" role="radiogroup" aria-label="Tu respuesta"></div>
+      <div class="nav-preg">
+        <button class="btn" id="btn-ant">← Anterior</button>
+        <button class="btn fuerte" id="btn-sig">Siguiente →</button>
+      </div>
+    </section>
+    <aside class="lado">
+      <div class="panel">
+        <h3>Preguntas</h3>
+        <div class="mapa" id="mapa"></div>
+        <div class="leyenda"><span><i style="background:#DCE9F8;border:1px solid #9DBDE3"></i>Respondida</span><span><i style="background:var(--ambar);border-radius:50%"></i>Por revisar</span></div>
+      </div>
+      <div class="panel"><h3>Avance</h3><div id="avance"></div></div>
+    </aside>
+  </div>
+</div>
+
+<!-- ============ RESULTADO ============ -->
+<main id="vista-resultado" hidden>
+  <div class="ancho resultado">
+    <section class="nota">
+      <div class="grande"><span id="r-nota"></span><small>/100</small></div>
+      <div><h2 id="r-titulo"></h2><p id="r-detalle"></p><p id="r-mensaje"></p></div>
+    </section>
+    <div class="fichas" id="r-fichas"></div>
+    <h3 style="margin-bottom:12px">Rendimiento por tema</h3>
+    <div class="por-tema" id="r-temas"></div>
+    <h3 style="margin-bottom:12px">Clave de respuestas</h3>
+    <div class="clave" id="r-clave"></div>
+    <div class="acciones"><button class="btn fuerte" id="btn-otro">Hacer otro simulacro</button><button class="btn" id="btn-inicio">Volver al inicio</button><button class="btn" id="btn-solo-malas">Ver solo las que fallé</button></div>
+    <h3 style="margin-bottom:12px">Revisión pregunta por pregunta</h3>
+    <div id="r-revision"></div>
+  </div>
+</main>
+
+<dialog id="dlg-entregar">
+  <h3>¿Entregar el examen?</h3>
+  <p id="dlg-texto"></p>
+  <div class="acciones"><button class="btn" id="dlg-no">Seguir respondiendo</button><button class="btn fuerte" id="dlg-si">Sí, entregar</button></div>
+</dialog>
+
+<dialog id="dlg-salir">
+  <h3>¿Estás seguro de salir del examen?</h3>
+  <p id="dlg-salir-texto"></p>
+  <div class="acciones"><button class="btn fuerte" id="salir-no">Seguir en el examen</button><button class="btn" id="salir-si">Sí, salir</button></div>
+</dialog>
+
+<script src="banco.js"></script>
+<script>
+(() => {
+  "use strict";
+  const N = 20, DURACION = 90 * 60, LETRAS = "ABCDE", CLAVE = "simulador_examen_v1", HIST = "simulador_historial_v1";
+  const NOMBRE = { matematicas: "Matemáticas", fisica: "Física" };
+  const $ = id => document.getElementById(id);
+  const B = window.BANCO;
+  let ex = null, tic = null;
+
+  // ---------- almacenamiento ----------
+  const leer = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } };
+  const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const borrar = k => { try { localStorage.removeItem(k); } catch {} };
+
+  // ---------- armado del examen ----------
+  function elegir(pesos) {            // pesos: [[valor, peso], …]
+    let total = pesos.reduce((s, p) => s + p[1], 0), r = Math.random() * total;
+    for (const p of pesos) { if ((r -= p[1]) <= 0) return p[0]; }
+    return pesos[pesos.length - 1][0];
+  }
+  function armar(materia) {
+    const banco = B[materia], usadas = new Set(), ids = [];
+    const porTema = banco.temas.map((_, t) => banco.preguntas.filter(p => p.t === t));
+    for (let k = 0; k < N; k++) {
+      const meta = k / (N - 1);
+      // tema de la posición k, según los exámenes de 2024 en adelante; si se agota, se prueba con los demás
+      let temas = banco.molde[k].filter(([t]) => porTema[t].some(p => !usadas.has(p.id)));
+      if (!temas.length) temas = banco.temas.map((_, t) => [t, 1]).filter(([t]) => porTema[t].some(p => !usadas.has(p.id)));
+      const tema = elegir(temas);
+      // dentro del tema, se prefieren preguntas que en su examen original ocupaban una posición parecida (misma dificultad)
+      const candidatas = porTema[tema].filter(p => !usadas.has(p.id)).map(p => [p, Math.exp(-(((p.d - meta) / 0.16) ** 2)) + 0.004]);
+      const p = elegir(candidatas);
+      usadas.add(p.id); ids.push(p.id);
+    }
+    return { materia, ids, resp: {}, marc: {}, inicio: Date.now(), fin: null, actual: 0 };
+  }
+  const pregunta = id => B[ex.materia].preguntas.find(p => p.id === id);
+  const src = (id, sol) => `img/${ex.materia}/${id}${sol ? "s" : ""}.webp`;
+
+  // ---------- vistas ----------
+  function ver(v) {
+    for (const n of ["inicio", "examen", "resultado"]) $("vista-" + n).hidden = n !== v;
+    window.scrollTo(0, 0);
+  }
+  const mmss = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); };
+  const restante = () => DURACION - (Date.now() - ex.inicio) / 1000;
+
+  function inicio() {
+    clearInterval(tic); ex = null;
+    $("total-banco").textContent = (B.matematicas.preguntas.length + B.fisica.preguntas.length).toLocaleString("es");
+    const pend = leer(CLAVE, null);
+    const vivo = pend && !pend.fin && DURACION - (Date.now() - pend.inicio) / 1000 > 0;
+    $("aviso-pendiente").hidden = !vivo;
+    if (vivo) { $("pend-materia").textContent = NOMBRE[pend.materia]; $("pend-tiempo").textContent = mmss(DURACION - (Date.now() - pend.inicio) / 1000); }
+    else if (pend && !pend.fin) borrar(CLAVE);
+    const h = leer(HIST, []);
+    $("sec-intentos").hidden = !h.length;
+    $("tabla-intentos").innerHTML = h.slice(0, 8).map(i => `<tr><td>${new Date(i.f).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" })}</td>
+      <td>${NOMBRE[i.m]}</td><td>${i.a} de ${N}</td><td><b>${i.a * 5}</b>/100</td><td>${mmss(i.t)}</td></tr>`).join("");
+    ver("inicio");
+  }
+
+  function empezar(materia) { ex = armar(materia); guardar(CLAVE, ex); abrirExamen(); }
+  function abrirExamen() {
+    $("ex-titulo").textContent = "Simulacro de " + NOMBRE[ex.materia];
+    $("mapa").innerHTML = ex.ids.map((_, i) => `<button data-i="${i}" aria-label="Pregunta ${i + 1}">${i + 1}</button>`).join("");
+    $("p-opciones").innerHTML = [...LETRAS].map(l => `<button class="opcion" role="radio" data-l="${l}" aria-checked="false">${l}</button>`).join("");
+    ver("examen"); pintar(); reloj();
+    clearInterval(tic); tic = setInterval(reloj, 500);
+  }
+  function reloj() {
+    if (!ex || ex.fin) return;
+    const r = restante();
+    $("reloj").textContent = mmss(r);
+    $("reloj").classList.toggle("poco", r <= 300);
+    if (r <= 0) entregar(true);
+  }
+  function pintar() {
+    const i = ex.actual, p = pregunta(ex.ids[i]), banco = B[ex.materia];
+    $("p-num").textContent = `Pregunta ${i + 1} de ${N}`;
+    $("p-tema").textContent = banco.temas[p.t];
+    const img = $("p-img");
+    img.width = 966; img.height = p.h; img.alt = `Enunciado de la pregunta ${i + 1}`;
+    img.src = src(p.id);
+    for (const b of $("p-opciones").children) b.setAttribute("aria-checked", String(ex.resp[i] === b.dataset.l));
+    $("btn-marcar").setAttribute("aria-pressed", String(!!ex.marc[i]));
+    $("btn-marcar").textContent = ex.marc[i] ? "★ Marcada para revisar" : "Marcar para revisar";
+    $("btn-ant").disabled = i === 0;
+    $("btn-sig").textContent = i === N - 1 ? "Revisar y entregar" : "Siguiente →";
+    const hechas = Object.keys(ex.resp).length;
+    for (const b of $("mapa").children) { const k = +b.dataset.i;
+      b.className = (ex.resp[k] ? "resp " : "") + (ex.marc[k] ? "marc " : "") + (k === i ? "act" : ""); }
+    $("barra-progreso").style.width = hechas / N * 100 + "%";
+    $("avance").innerHTML = `<b>${hechas}</b> de ${N} respondidas` + (Object.keys(ex.marc).length ? `<br>${Object.keys(ex.marc).length} por revisar` : "");
+    if (i + 1 < N) new Image().src = src(ex.ids[i + 1]);      // adelanta la carga de la siguiente
+  }
+  function ir(i) { ex.actual = Math.max(0, Math.min(N - 1, i)); guardar(CLAVE, ex); pintar(); $("vista-examen").querySelector(".hoja").scrollIntoView({ block: "nearest" }); }
+  function responder(l) { const i = ex.actual; if (ex.resp[i] === l) delete ex.resp[i]; else ex.resp[i] = l; guardar(CLAVE, ex); pintar(); }
+  function pedirEntrega() {
+    const faltan = N - Object.keys(ex.resp).length;
+    $("dlg-texto").textContent = (faltan ? `Te ${faltan === 1 ? "falta 1 pregunta" : "faltan " + faltan + " preguntas"} por responder; las que dejes en blanco cuentan como incorrectas. ` : "Respondiste las 20 preguntas. ")
+      + `Te quedan ${mmss(restante())}. Después de entregar ya no podrás cambiar tus respuestas.`;
+    $("dlg-entregar").showModal();
+  }
+  function entregar(porTiempo) {
+    if (!ex || ex.fin) return;
+    clearInterval(tic); if ($("dlg-entregar").open) $("dlg-entregar").close(); if ($("dlg-salir").open) $("dlg-salir").close();
+    ex.fin = Math.min(Date.now(), ex.inicio + DURACION * 1000); ex.porTiempo = !!porTiempo;
+    guardar(CLAVE, ex);
+    const aciertos = ex.ids.filter((id, i) => ex.resp[i] === pregunta(id).r).length;
+    const h = leer(HIST, []); h.unshift({ f: ex.fin, m: ex.materia, a: aciertos, t: Math.round((ex.fin - ex.inicio) / 1000) }); guardar(HIST, h.slice(0, 30));
+    resultado();
+  }
+
+  // ---------- resultado ----------
+  function resultado() {
+    const banco = B[ex.materia], ps = ex.ids.map(pregunta);
+    const estado = ps.map((p, i) => !ex.resp[i] ? "nada" : ex.resp[i] === p.r ? "ok" : "mal");
+    const ok = estado.filter(e => e === "ok").length, mal = estado.filter(e => e === "mal").length, nada = N - ok - mal;
+    const seg = Math.round((ex.fin - ex.inicio) / 1000);
+    $("r-nota").textContent = ok * 5;
+    $("r-titulo").textContent = `Simulacro de ${NOMBRE[ex.materia]}`;
+    $("r-detalle").textContent = `${ok} de ${N} respuestas correctas` + (ex.porTiempo ? " · se entregó al terminarse el tiempo" : "");
+    $("r-mensaje").textContent = ok >= 17 ? "Excelente resultado. Mantén el ritmo con otro simulacro." : ok >= 13 ? "Buen trabajo. Repasa las que fallaste y vuelve a intentarlo."
+      : ok >= 8 ? "Vas por buen camino. Revisa las soluciones y refuerza los temas más flojos." : "Revisa con calma las soluciones: cada error de hoy es un punto ganado en el examen.";
+    $("r-fichas").innerHTML = [[ok, "correctas"], [mal, "incorrectas"], [nada, "en blanco"], [mmss(seg), "tiempo usado"], [mmss(seg / Math.max(1, N - nada)), "promedio por pregunta respondida"]]
+      .map(([v, t]) => `<div class="ficha"><b>${v}</b><span>${t}</span></div>`).join("");
+    const temas = {};
+    ps.forEach((p, i) => { const t = banco.temas[p.t]; (temas[t] ??= [0, 0])[1]++; if (estado[i] === "ok") temas[t][0]++; });
+    $("r-temas").innerHTML = Object.entries(temas).map(([t, [a, n]]) =>
+      `<div class="fila-tema"><span>${t}</span><span class="pista"><i style="width:${a / n * 100}%"></i></span><b>${a}/${n}</b></div>`).join("");
+    $("r-clave").innerHTML = ps.map((p, i) => `<a class="${estado[i]}" href="#rev-${i + 1}"><b>${i + 1}. ${p.r}</b>${estado[i] === "ok" ? "✓ correcta" : estado[i] === "mal" ? "✗ marcaste " + ex.resp[i] : "— en blanco"}</a>`).join("");
+    $("r-revision").innerHTML = ps.map((p, i) => {
+      const e = estado[i], tuya = ex.resp[i];
+      const letras = [...LETRAS].map(l => `<span class="${l === p.r ? "correcta" : l === tuya ? "tuya-mal" : ""}">${l}</span>`).join("");
+      return `<article class="revision ${e}" id="rev-${i + 1}">
+        <header><span class="num">${i + 1}</span><span class="sello">${e === "ok" ? "✓ Correcta" : e === "mal" ? "✗ Incorrecta" : "— En blanco"}</span>
+          <span>${e === "mal" ? `Marcaste <b>${tuya}</b> · ` : ""}Respuesta correcta: <b>${p.r}</b></span><span class="tema" style="margin-left:auto">${banco.temas[p.t]}</span></header>
+        <div class="cuerpo">
+          <div class="lienzo"><img loading="lazy" width="966" height="${p.h}" src="${src(p.id)}" alt="Enunciado de la pregunta ${i + 1}"></div>
+          <div class="letras">${letras}</div>
+          <details class="sol"><summary>Ver la solución paso a paso</summary><div class="lienzo"><img loading="lazy" width="966" height="${p.hs}" src="${src(p.id, true)}" alt="Solución de la pregunta ${i + 1}"></div></details>
+          <div class="origen">Tomada de un examen de ${p.f || p.a}.</div>
+        </div></article>`; }).join("");
+    $("btn-solo-malas").textContent = "Ver solo las que fallé"; $("btn-solo-malas").hidden = ok === N;
+    ver("resultado");
+  }
+
+  // ---------- eventos ----------
+  document.querySelectorAll(".materia").forEach(b => b.onclick = () => empezar(b.dataset.materia));
+  $("btn-continuar").onclick = () => { ex = leer(CLAVE, null); if (ex) abrirExamen(); };
+  $("btn-descartar").onclick = () => { borrar(CLAVE); inicio(); };
+  $("p-opciones").onclick = e => { const b = e.target.closest(".opcion"); if (b) responder(b.dataset.l); };
+  $("mapa").onclick = e => { const b = e.target.closest("button"); if (b) ir(+b.dataset.i); };
+  $("btn-ant").onclick = () => ir(ex.actual - 1);
+  $("btn-sig").onclick = () => ex.actual === N - 1 ? pedirEntrega() : ir(ex.actual + 1);
+  $("btn-marcar").onclick = () => { const i = ex.actual; if (ex.marc[i]) delete ex.marc[i]; else ex.marc[i] = 1; guardar(CLAVE, ex); pintar(); };
+  $("btn-entregar").onclick = pedirEntrega;
+  $("btn-salir").onclick = () => {
+    const hechas = Object.keys(ex.resp).length;
+    $("dlg-salir-texto").textContent = `Volverás a la página principal y este simulacro se perderá` + (hechas ? `, junto con tus ${hechas} respuesta${hechas === 1 ? "" : "s"}` : "") + `. No se guarda ninguna calificación.`;
+    $("dlg-salir").showModal();
+  };
+  $("salir-no").onclick = () => $("dlg-salir").close();
+  $("salir-si").onclick = () => { $("dlg-salir").close(); borrar(CLAVE); inicio(); };
+  $("dlg-no").onclick = () => $("dlg-entregar").close();
+  $("dlg-si").onclick = () => entregar(false);
+  $("btn-otro").onclick = () => { const m = ex.materia; borrar(CLAVE); empezar(m); };
+  $("btn-inicio").onclick = () => { borrar(CLAVE); inicio(); };
+  $("btn-solo-malas").onclick = e => { const solo = e.target.textContent.startsWith("Ver solo");
+    document.querySelectorAll(".revision.ok").forEach(a => a.hidden = solo); e.target.textContent = solo ? "Ver todas las preguntas" : "Ver solo las que fallé"; };
+  document.addEventListener("keydown", e => {
+    if (!ex || ex.fin || $("vista-examen").hidden || $("dlg-entregar").open || $("dlg-salir").open || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toUpperCase();
+    if (LETRAS.includes(k) && k.length === 1) responder(k);
+    else if (e.key === "ArrowRight") ir(ex.actual + 1);
+    else if (e.key === "ArrowLeft") ir(ex.actual - 1);
+  });
+  window.addEventListener("beforeunload", e => { if (ex && !ex.fin && Object.keys(ex.resp).length) { e.preventDefault(); e.returnValue = ""; } });
+
+  // ---------- arranque ----------
+  const previo = leer(CLAVE, null);
+  if (previo && previo.fin) { ex = previo; resultado(); } else inicio();
+})();
+</script>
+</body>
+</html>
