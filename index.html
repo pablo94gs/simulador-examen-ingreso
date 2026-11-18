@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulador Examen Ingreso ESPOL · Matemáticas y Física</title>
-<meta name="description" content="Practica con exámenes de 20 preguntas y 1 hora 30 minutos, armados con preguntas reales de exámenes de ingreso de Matemáticas y Física.">
+<title>Simulador y aula virtual pre ESPOL</title>
+<meta name="description" content="Simuladores de examen de Matemáticas y Física, aula virtual y videos con la solución de exámenes pasados.">
 <style>
   :root {
     --tinta: #14213D; --suave: #5A6478; --linea: #DDE2EA; --fondo: #F4F6FA; --papel: #FFFFFF;
@@ -31,6 +31,7 @@
              box-shadow: 0 10px 30px -18px rgba(20,33,61,.45); transition: transform .15s, box-shadow .15s, border-color .15s; }
   .materia:hover, .materia:focus-visible { transform: translateY(-3px); border-color: var(--azul2); box-shadow: 0 16px 36px -18px rgba(20,33,61,.55); outline: none; }
   .materia h2 { font-size: 1.6rem; color: var(--azul); }
+  @media (min-width: 700px) { .materias.cuatro { grid-template-columns: 1fr 1fr; } }
   .materia .temas { color: var(--suave); font-size: .92rem; }
   .materia .ir { margin-top: 8px; font-weight: 700; color: var(--azul2); }
   .seccion { margin: 40px auto; }
@@ -137,7 +138,46 @@
   dialog p { color: var(--suave); margin: 0 0 18px; }
   dialog .acciones { margin: 0; justify-content: flex-end; }
 
+  /* ---------- páginas interiores, aula y videos ---------- */
+  .pagina { padding-top: 22px; padding-bottom: 60px; }
+  .materia .mini2 { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--suave); font-weight: 700; }
+  .materia .candado { font-size: .8rem; font-weight: 700; color: #7A5200; background: #FFF1CC; border-radius: 99px; padding: 3px 10px; align-self: flex-start; }
+  .materia .pista { height: 6px; background: var(--linea); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .materia .pista i { display: block; height: 100%; background: var(--verde); }
+  .titulo { font-size: clamp(1.4rem, 3.4vw, 2rem); color: var(--azul); margin: 6px 0 18px; }
+  .migas { color: var(--suave); font-size: .92rem; margin-bottom: 8px; }
+  .enlace { background: none; border: 0; padding: 0; color: var(--azul2); font-weight: 700; text-decoration: underline; }
+  .lista-temas { display: grid; gap: 10px; }
+  .fila-tema2 { display: grid; grid-template-columns: 54px 1fr auto; gap: 4px 14px; align-items: center; text-align: left; background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px 18px; }
+  .fila-tema2:hover { border-color: var(--azul2); }
+  .fila-tema2 b { font-family: Georgia, serif; font-size: 1.2rem; color: var(--ambar); }
+  .fila-tema2 small { color: var(--suave); }
+  .pestanas { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+  .hecho { margin-left: auto; font-size: .9rem; font-weight: 600; display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .opciones { grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); }
+  .opciones.chicas { max-width: 420px; margin-top: 14px; grid-template-columns: repeat(5, 1fr); } .opciones.chicas .opcion { padding: 8px 0; font-size: 1rem; }
+  .opcion.bien { background: var(--verde); border-color: var(--verde); color: #fff; } .opcion.mal { background: var(--rojo-f); border-color: var(--rojo); color: var(--rojo); }
+  .veredicto { font-weight: 700; margin: 10px 0 0; } .veredicto.bien { color: var(--verde); } .veredicto.mal { color: var(--rojo); }
+  .btn.chico { padding: 6px 12px; font-size: .88rem; } .btn.verde { background: var(--verde); border-color: var(--verde); color: #fff; } .btn.roja { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .config { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 18px; align-items: start; }
+  .cap-sel { border-bottom: 1px solid var(--linea); padding: 8px 0; } .cap-sel summary { cursor: pointer; } .cap-sel summary label { cursor: pointer; }
+  .temas-sel { display: grid; gap: 6px; padding: 10px 0 4px 26px; font-size: .93rem; } .temas-sel label, .casilla { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+  .casilla { margin: 8px 0; }
+  .campo { display: grid; gap: 6px; font-weight: 600; margin-bottom: 12px; font-size: .93rem; }
+  .campo input, .campo textarea, #codigo { font: inherit; padding: 10px 12px; border: 1.5px solid var(--linea); border-radius: 10px; width: 100%; background: #fff; color: var(--tinta); }
+  .tuya { background: #F4F6FA; border-radius: 10px; padding: 10px 14px; margin: 14px 0 6px; white-space: pre-wrap; }
+  .error { color: var(--rojo); font-weight: 700; }
+  .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .video { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); overflow: hidden; }
+  .video h4 { margin: 0; padding: 10px 14px; font-size: 1rem; }
+  .video .marco { position: relative; aspect-ratio: 16 / 9; background: #000; display: block; width: 100%; border: 0; padding: 0; }
+  .video .marco img, .video .marco iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; }
+  .video .marco::after { content: "▶"; position: absolute; inset: 0; margin: auto; width: 64px; height: 44px; border-radius: 12px; background: rgba(200,0,0,.9); color: #fff; display: grid; place-items: center; font-size: 1.3rem; }
+  .video .marco.puesto::after { display: none; }
+
   @media (max-width: 860px) {
+    .config { grid-template-columns: 1fr; }
+    .fila-tema2 { grid-template-columns: 44px 1fr; } .fila-tema2 small { grid-column: 2; }
     .examen { grid-template-columns: minmax(0, 1fr); }
     .lado { position: static; }
     .mapa { grid-template-columns: repeat(10, 1fr); }
@@ -166,9 +206,8 @@
   <section class="portada">
     <div class="ancho">
       <div class="mini">Matemáticas · Física</div>
-      <h1>Simulador Examen Ingreso ESPOL</h1>
-      <p>Practica como si fuera el día del examen: cada simulacro se arma al azar con preguntas reales de exámenes anteriores, en el mismo orden de temas que los exámenes desde 2024.</p>
-      <div class="datos"><span><b>20</b>preguntas</span><span><b>1 h 30 min</b>de tiempo</span><span><b id="total-banco">—</b>preguntas en el banco</span></div>
+      <h1>Simulador y aula virtual pre ESPOL</h1>
+      <p>Practica con simulacros armados con preguntas reales de exámenes anteriores, estudia con el aula virtual y repasa los exámenes pasados resueltos en video.</p>
     </div>
   </section>
   <div class="ancho">
@@ -177,30 +216,28 @@
       <span><button class="btn fuerte" id="btn-continuar">Continuar</button> <button class="btn" id="btn-descartar">Descartarlo</button></span>
     </div>
     <section class="seccion">
-      <h3>Indicaciones para el examen</h3>
-      <ol class="pasos">
-        <li><b>20 preguntas de opción múltiple.</b> Cada una tiene cinco opciones (A a E) y una sola respuesta correcta.</li>
-        <li><b>Tienes 1 hora 30 minutos.</b> El reloj no se detiene; cuando llega a cero, el examen se entrega solo.</li>
-        <li><b>La dificultad va subiendo.</b> Las primeras preguntas son las más fáciles y las últimas las más difíciles.</li>
-        <li><b>Responde en el orden que quieras.</b> Puedes saltar preguntas, marcarlas para revisar y cambiar tu respuesta antes de entregar.</li>
-        <li><b>Cada acierto vale 5 puntos.</b> La nota es sobre 100. Las preguntas en blanco no suman y los errores no restan.</li>
-        <li><b>Al entregar ves tu calificación.</b> Con la respuesta correcta y la solución paso a paso de cada pregunta.</li>
-        <li><b>Puedes salir cuando quieras.</b> Si vuelves a la página principal durante el examen, ese simulacro se pierde.</li>
-        <li><b>Prepárate como en el examen real.</b> Ten a la mano lápiz y papel, y busca un lugar sin interrupciones.</li>
-      </ol>
-    </section>
-    <section class="seccion">
-      <h3>¿Qué examen quieres tomar?</h3>
-      <div class="materias">
-        <button class="materia" data-materia="matematicas">
-          <h2>Matemáticas</h2>
-          <div class="temas">Lógica y conjuntos, números reales, funciones, trigonometría, geometría, matrices, vectores…</div>
-          <div class="ir">Empezar examen de Matemáticas →</div>
+      <h3>¿Qué quieres hacer?</h3>
+      <div class="materias cuatro">
+        <button class="materia" data-ir="sim:matematicas">
+          <h2>Simulador de examen de Matemáticas</h2>
+          <div class="temas">20 preguntas en 1 hora 30 minutos: lógica y conjuntos, números reales, funciones, trigonometría, geometría, matrices, vectores…</div>
+          <div class="ir">Ver las instrucciones →</div>
         </button>
-        <button class="materia" data-materia="fisica">
-          <h2>Física</h2>
-          <div class="temas">Mediciones y unidades, vectores, cinemática, movimiento en el plano y dinámica.</div>
-          <div class="ir">Empezar examen de Física →</div>
+        <button class="materia" data-ir="sim:fisica">
+          <h2>Simulador de examen de Física</h2>
+          <div class="temas">20 preguntas en 1 hora 30 minutos: mediciones y unidades, vectores, cinemática, movimiento en el plano y dinámica.</div>
+          <div class="ir">Ver las instrucciones →</div>
+        </button>
+        <button class="materia" data-ir="aula">
+          <span class="candado">🔒 Con código de acceso</span>
+          <h2>Aula virtual</h2>
+          <div class="temas">Ejemplos resueltos y ejercicios propuestos por capítulo y tema, y simulador de lecciones con los temas, la cantidad de preguntas y el tiempo que elijas.</div>
+          <div class="ir">Entrar con mi código →</div>
+        </button>
+        <button class="materia" data-ir="pasados">
+          <h2>Aula de exámenes pasados</h2>
+          <div class="temas">Exámenes anteriores de Matemáticas y Física resueltos en video, ejercicio por ejercicio y en orden.</div>
+          <div class="ir">Ver los exámenes resueltos →</div>
         </button>
       </div>
     </section>
@@ -211,6 +248,40 @@
     <p class="pie">Las preguntas provienen de exámenes de ingreso y de nivelación de años anteriores. Tus respuestas y tu historial se guardan solo en este dispositivo.</p>
   </div>
 </main>
+
+<!-- ============ INSTRUCCIONES DEL SIMULADOR ============ -->
+<main id="vista-instr" hidden>
+  <div class="barra"><div class="ancho"><button class="btn salir" data-ir="inicio">← <span class="largo">Página principal</span><span class="corto">Inicio</span></button><div class="tit" id="instr-barra"></div></div></div>
+  <div class="ancho pagina">
+    <h2 class="titulo" id="instr-titulo"></h2>
+    <div class="datos" style="margin:0 0 22px"><span><b style="color:var(--azul)">20</b>preguntas</span><span><b style="color:var(--azul)">1 h 30 min</b>de tiempo</span><span><b style="color:var(--azul)" id="total-banco">—</b>preguntas en el banco</span></div>
+    <h3 style="margin-bottom:12px">Instrucciones para el examen</h3>
+    <ol class="pasos">
+      <li><b>20 preguntas de opción múltiple.</b> Cada una tiene cinco opciones (A a E) y una sola respuesta correcta.</li>
+      <li><b>Tienes 1 hora 30 minutos.</b> El reloj no se detiene; cuando llega a cero, el examen se entrega solo.</li>
+      <li><b>La dificultad va subiendo.</b> Las primeras preguntas son las más fáciles y las últimas las más difíciles.</li>
+      <li><b>Responde en el orden que quieras.</b> Puedes saltar preguntas, marcarlas para revisar y cambiar tu respuesta antes de entregar.</li>
+      <li><b>Cada acierto vale 5 puntos.</b> La nota es sobre 100. Las preguntas en blanco no suman y los errores no restan.</li>
+      <li><b>Al entregar ves tu calificación.</b> Con la respuesta correcta y la solución paso a paso de cada pregunta.</li>
+      <li><b>Puedes salir cuando quieras.</b> Si vuelves a la página principal durante el examen, ese simulacro se pierde.</li>
+      <li><b>Prepárate como en el examen real.</b> Ten a la mano lápiz y papel, y busca un lugar sin interrupciones.</li>
+    </ol>
+    <div class="acciones"><button class="btn fuerte" id="btn-empezar" style="font-size:1.1rem;padding:14px 26px">Empezar el examen →</button><button class="btn" data-ir="inicio">Volver</button></div>
+  </div>
+</main>
+
+<!-- ============ AULA DE EXÁMENES PASADOS ============ -->
+<main id="vista-pasados" hidden>
+  <div class="barra"><div class="ancho"><button class="btn salir" data-ir="inicio">← <span class="largo">Página principal</span><span class="corto">Inicio</span></button><div class="tit">Aula de exámenes pasados</div></div></div>
+  <div class="ancho pagina" id="pasados-cuerpo"></div>
+</main>
+
+<!-- ============ AULA VIRTUAL ============ -->
+<div id="vista-aula" hidden>
+  <div class="barra"><div class="ancho"><button class="btn salir" id="aula-salir">← <span class="largo">Página principal</span><span class="corto">Inicio</span></button><div class="tit" id="aula-tit">Aula virtual</div>
+    <div class="reloj" id="aula-reloj" role="timer" aria-label="Tiempo restante" hidden></div><button class="btn ambar" id="aula-entregar" hidden>Entregar</button></div></div>
+  <div class="ancho pagina" id="aula-cuerpo"></div>
+</div>
 
 <!-- ============ EXAMEN ============ -->
 <div id="vista-examen" hidden>
@@ -278,7 +349,18 @@
   <div class="acciones"><button class="btn fuerte" id="salir-no">Seguir en el examen</button><button class="btn" id="salir-si">Sí, salir</button></div>
 </dialog>
 
+<dialog id="dlg-codigo">
+  <form id="form-codigo">
+    <h3>Aula virtual</h3>
+    <p>Escribe tu código de acceso para entrar.</p>
+    <input type="password" id="codigo" inputmode="numeric" autocomplete="off" aria-label="Código de acceso">
+    <p class="error" id="codigo-error" hidden></p>
+    <div class="acciones" style="margin-top:16px"><button type="button" class="btn" id="codigo-no">Cancelar</button><button class="btn fuerte" id="codigo-si">Entrar</button></div>
+  </form>
+</dialog>
+
 <script src="banco.js"></script>
+<script src="videos.js"></script>
 <script>
 (() => {
   "use strict";
@@ -320,7 +402,7 @@
 
   // ---------- vistas ----------
   function ver(v) {
-    for (const n of ["inicio", "examen", "resultado"]) $("vista-" + n).hidden = n !== v;
+    for (const n of ["inicio", "instr", "examen", "resultado", "pasados", "aula"]) $("vista-" + n).hidden = n !== v;
     window.scrollTo(0, 0);
   }
   const mmss = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
@@ -329,7 +411,6 @@
 
   function inicio() {
     clearInterval(tic); ex = null;
-    $("total-banco").textContent = (B.matematicas.preguntas.length + B.fisica.preguntas.length).toLocaleString("es");
     const pend = leer(CLAVE, null);
     const vivo = pend && !pend.fin && DURACION - (Date.now() - pend.inicio) / 1000 > 0;
     $("aviso-pendiente").hidden = !vivo;
@@ -429,7 +510,53 @@
   }
 
   // ---------- eventos ----------
-  document.querySelectorAll(".materia").forEach(b => b.onclick = () => empezar(b.dataset.materia));
+  // ---------- instrucciones antes del simulador ----------
+  let materiaElegida = null;
+  function instrucciones(materia) {
+    materiaElegida = materia;
+    $("instr-titulo").textContent = $("instr-barra").textContent = "Simulador de examen de " + NOMBRE[materia];
+    $("total-banco").textContent = B[materia].preguntas.length.toLocaleString("es");
+    ver("instr");
+  }
+
+  // ---------- aula de exámenes pasados (videos) ----------
+  const V = window.VIDEOS || {};
+  const migas = partes => `<nav class="migas">${partes.map(([t, a]) => a ? `<button class="enlace" data-pas="${a}">${t}</button>` : `<b>${t}</b>`).join(" › ")}</nav>`;
+  function pasados(materia, k) {
+    const c = $("pasados-cuerpo");
+    if (!materia) {
+      c.innerHTML = `<h2 class="titulo">¿De qué materia?</h2><div class="materias">${Object.keys(NOMBRE).map(m => `<button class="materia" data-pas="${m}"><h2>${NOMBRE[m]}</h2>
+        <div class="temas">${(V[m] || []).length} examen${(V[m] || []).length === 1 ? "" : "es"} resuelto${(V[m] || []).length === 1 ? "" : "s"} en video</div><div class="ir">Ver los exámenes →</div></button>`).join("")}</div>`;
+    } else if (k === undefined) {
+      const lista = V[materia] || [];
+      c.innerHTML = migas([["Exámenes pasados", "inicio"], [NOMBRE[materia]]]) + `<h2 class="titulo">Exámenes resueltos de ${NOMBRE[materia]}</h2>` + (lista.length
+        ? `<div class="materias">${lista.map((e, i) => `<button class="materia" data-pas="${materia}:${i}"><h2>${e.titulo}</h2><div class="temas">${e.videos.length ? e.videos.length + " ejercicios resueltos en video" : "Videos por enlazar"}</div><div class="ir">Ver los videos →</div></button>`).join("")}</div>`
+        : `<p class="origen">Todavía no hay exámenes resueltos de esta materia.</p>`);
+    } else {
+      const e = V[materia][k];
+      c.innerHTML = migas([["Exámenes pasados", "inicio"], [NOMBRE[materia], materia], [e.titulo]]) + `<h2 class="titulo">${e.titulo}</h2>` + (e.videos.length
+        ? `<div class="videos">${e.videos.map(([n, id]) => `<article class="video"><h4>Ejercicio ${n}</h4><button class="marco" data-yt="${id}" aria-label="Reproducir el ejercicio ${n}"><img loading="lazy" src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt=""></button></article>`).join("")}</div>`
+        : `<p class="origen">Los videos de este examen todavía no están enlazados.</p>`);
+    }
+    ver("pasados");
+  }
+  $("pasados-cuerpo").onclick = e => {
+    const y = e.target.closest("[data-yt]");
+    if (y) { y.classList.add("puesto"); y.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${y.dataset.yt}?autoplay=1&rel=0" title="Video del ejercicio" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; return; }
+    const b = e.target.closest("[data-pas]");
+    if (!b) return;
+    const [m, k] = b.dataset.pas.split(":");
+    pasados(m === "inicio" ? null : m, k === undefined ? undefined : +k);
+  };
+
+  // ---------- eventos ----------
+  window.SIM = { ver };
+  document.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => {
+    const [d, m] = b.dataset.ir.split(":");
+    if (d === "sim") instrucciones(m); else if (d === "pasados") pasados(); else if (d === "aula") window.AULA.entrar(); else inicio();
+  });
+  $("btn-empezar").onclick = () => empezar(materiaElegida);
+  $("aula-salir").onclick = () => { if (window.AULA.salir()) inicio(); };
   $("btn-continuar").onclick = () => { ex = leer(CLAVE, null); if (ex) abrirExamen(); };
   $("btn-descartar").onclick = () => { borrar(CLAVE); inicio(); };
   $("p-opciones").onclick = e => { const b = e.target.closest(".opcion"); if (b) responder(b.dataset.l); };
@@ -465,5 +592,6 @@
   if (previo && previo.fin) { ex = previo; resultado(); } else inicio();
 })();
 </script>
+<script src="aula.js"></script>
 </body>
 </html>
