@@ -167,6 +167,8 @@
   .campo input, .campo textarea, #codigo { font: inherit; padding: 10px 12px; border: 1.5px solid var(--linea); border-radius: 10px; width: 100%; background: #fff; color: var(--tinta); }
   .tuya { background: #F4F6FA; border-radius: 10px; padding: 10px 14px; margin: 14px 0 6px; white-space: pre-wrap; }
   .error { color: var(--rojo); font-weight: 700; }
+  .examen-pas { padding: 18px 20px; gap: 6px; } .examen-pas h2 { font-size: 1.15rem; } .examen-pas.sin h2 { color: var(--suave); }
+  .materia .candado.listo { background: var(--verde-f); color: var(--verde); } .examen-pas.sin .candado { background: #EEF0F4; color: var(--suave); }
   .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
   .video { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); overflow: hidden; }
   .video h4 { margin: 0; padding: 10px 14px; font-size: 1rem; }
@@ -526,17 +528,19 @@
     const c = $("pasados-cuerpo");
     if (!materia) {
       c.innerHTML = `<h2 class="titulo">¿De qué materia?</h2><div class="materias">${Object.keys(NOMBRE).map(m => `<button class="materia" data-pas="${m}"><h2>${NOMBRE[m]}</h2>
-        <div class="temas">${(V[m] || []).length} examen${(V[m] || []).length === 1 ? "" : "es"} resuelto${(V[m] || []).length === 1 ? "" : "s"} en video</div><div class="ir">Ver los exámenes →</div></button>`).join("")}</div>`;
+        <div class="temas">${(V[m] || []).filter(e => e.videos.length).length} de ${(V[m] || []).length} exámenes ya resueltos en video</div><div class="ir">Ver los exámenes →</div></button>`).join("")}</div>`;
     } else if (k === undefined) {
       const lista = V[materia] || [];
+      const anios = [...new Set(lista.map(e => e.anio))];
       c.innerHTML = migas([["Exámenes pasados", "inicio"], [NOMBRE[materia]]]) + `<h2 class="titulo">Exámenes resueltos de ${NOMBRE[materia]}</h2>` + (lista.length
-        ? `<div class="materias">${lista.map((e, i) => `<button class="materia" data-pas="${materia}:${i}"><h2>${e.titulo}</h2><div class="temas">${e.videos.length ? e.videos.length + " ejercicios resueltos en video" : "Videos por enlazar"}</div><div class="ir">Ver los videos →</div></button>`).join("")}</div>`
+        ? anios.map(a => `<section class="seccion" style="margin:0 0 28px"><h3>${a}</h3><div class="materias">${lista.map((e, i) => e.anio !== a ? "" : `<button class="materia examen-pas${e.videos.length ? "" : " sin"}" data-pas="${materia}:${i}">
+            <span class="candado ${e.videos.length ? "listo" : ""}">${e.videos.length ? "▶ " + e.videos.length + " videos" : "Próximamente"}</span><h2>${e.titulo}</h2><div class="temas">${e.sub}</div></button>`).join("")}</div></section>`).join("")
         : `<p class="origen">Todavía no hay exámenes resueltos de esta materia.</p>`);
     } else {
       const e = V[materia][k];
-      c.innerHTML = migas([["Exámenes pasados", "inicio"], [NOMBRE[materia], materia], [e.titulo]]) + `<h2 class="titulo">${e.titulo}</h2>` + (e.videos.length
+      c.innerHTML = migas([["Exámenes pasados", "inicio"], [NOMBRE[materia], materia], [e.titulo]]) + `<h2 class="titulo" style="margin-bottom:6px">${e.titulo}</h2><p class="origen" style="margin:0 0 18px">${e.sub}</p>` + (e.videos.length
         ? `<div class="videos">${e.videos.map(([n, id]) => `<article class="video"><h4>Ejercicio ${n}</h4><button class="marco" data-yt="${id}" aria-label="Reproducir el ejercicio ${n}"><img loading="lazy" src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt=""></button></article>`).join("")}</div>`
-        : `<p class="origen">Los videos de este examen todavía no están enlazados.</p>`);
+        : `<p class="origen">Los videos de este examen todavía no están listos. Muy pronto estarán aquí.</p>`);
     }
     ver("pasados");
   }

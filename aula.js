@@ -1,5 +1,5 @@
 /* Aula virtual: práctica por capítulo y simulador de lecciones con el banco del libro.
-   El contenido (aula/indice.bin y aula/<id>.bin) está cifrado con AES-GCM; la llave se deriva del código de acceso. */
+   El contenido (aula/indice.js y aula/<id>.js) está cifrado con AES-GCM; la llave se deriva del código de acceso. */
 (() => {
   "use strict";
   const $ = id => document.getElementById(id), cuerpo = $("aula-cuerpo");
@@ -13,24 +13,37 @@
     return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); };
 
   // ---------- cifrado ----------
+  // Los archivos del aula son .js que llaman a window.__aula(nombre, contenido): se cargan con <script>, que
+  // funciona igual en la página publicada y abriendo index.html con doble clic.
+  const espera = new Map();
+  window.__aula = (nombre, texto) => { const f = espera.get(nombre); espera.delete(nombre); f?.(texto); };
+  function traer(nombre) {
+    return new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      espera.set(nombre, ok);
+      s.src = `aula/${nombre}.js`;
+      s.onerror = () => { espera.delete(nombre); s.remove(); mal(new TypeError("no se pudo descargar " + nombre)); };
+      s.onload = () => s.remove();
+      document.head.append(s);
+    });
+  }
+  const bytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   async function derivar(codigo) {
-    const cfg = await (await fetch("aula/llave.json")).json();
+    const cfg = JSON.parse(await traer("llave"));
     const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(codigo), "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: Uint8Array.from(atob(cfg.sal), c => c.charCodeAt(0)), iterations: cfg.iter, hash: "SHA-256" },
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: bytes(cfg.sal), iterations: cfg.iter, hash: "SHA-256" },
       base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
   }
-  async function descifrar(ruta, k) {
-    const r = await fetch(ruta);
-    if (!r.ok) throw new TypeError("no se pudo descargar " + ruta);
-    const b = new Uint8Array(await r.arrayBuffer());
+  async function descifrar(nombre, k) {
+    const b = bytes(await traer(nombre));
     return crypto.subtle.decrypt({ name: "AES-GCM", iv: b.subarray(0, 12) }, k, b.subarray(12));
   }
   /** Devuelve "" si el código abre el aula, o el mensaje de error. */
   async function abrirCon(codigo) {
-    if (!window.crypto || !crypto.subtle) return "Este navegador no permite abrir el aula. Usa la página publicada en internet (https).";
+    if (!window.crypto || !crypto.subtle) return "Este navegador no permite abrir el aula desde aquí. Entra por la página publicada en internet.";
     let k, datos;
-    try { k = await derivar(codigo); datos = await descifrar("aula/indice.bin", k); }
-    catch (e) { return e instanceof TypeError ? "No se pudo descargar el aula. Ábrela desde la página publicada en internet y revisa tu conexión." : "Código incorrecto."; }
+    try { k = await derivar(codigo); datos = await descifrar("indice", k); }
+    catch (e) { return e instanceof TypeError ? "No se pudo descargar el aula. Revisa tu conexión e inténtalo de nuevo." : "Código incorrecto."; }
     llave = k; LIBRO = JSON.parse(new TextDecoder().decode(datos));
     for (const c of LIBRO) {                       // los ejemplos anteriores al primer tema se agrupan en el primero
       const primero = c.secciones[0][0];
@@ -48,7 +61,7 @@
     if (!id || el.dataset.ok) return;
     el.dataset.ok = "1";
     try {
-      if (!urls.has(id)) urls.set(id, descifrar(`aula/${id}.bin`, llave).then(b => URL.createObjectURL(new Blob([b], { type: "image/webp" }))));
+      if (!urls.has(id)) urls.set(id, descifrar(id, llave).then(b => URL.createObjectURL(new Blob([b], { type: "image/webp" }))));
       el.src = await urls.get(id);
     } catch { urls.delete(id); delete el.dataset.ok; el.alt = "No se pudo cargar la imagen. Revisa tu conexión."; }
   }
