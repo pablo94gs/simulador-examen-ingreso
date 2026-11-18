@@ -78,7 +78,6 @@
 
   // ---------- datos ----------
   const cap = n => LIBRO.find(c => c.cap === n);
-  const sirve = (it, soloOpcion) => soloOpcion ? !!it.r : !!(it.r || it.hr || it.hs);       // tiene con qué comprobarse
   const hechos = () => new Set(leer(HECHOS, []));
   const migas = partes => `<nav class="migas">${partes.map(([t, a]) => a ? `<button class="enlace" data-acc="${a}">${esc(t)}</button>` : `<b>${esc(t)}</b>`).join(" › ")}</nav>`;
 
@@ -128,10 +127,15 @@
   }
 
   // ---------- simulador de lecciones: configuración ----------
+  // Las lecciones usan solo ejercicios de opción múltiple (los que el libro responde con una letra): se contestan
+  // marcando una opción y se califican solos.
+  const deOpcion = (c, k) => c.propuestos.filter(p => p.r && (k === undefined || p.s === k));
   function configurar() {
     lec = null; clearInterval(tic);
-    const caps = LIBRO.map(c => `<details class="cap-sel"><summary><label><input type="checkbox" data-cap="${c.cap}"> <b>Capítulo ${c.cap}.</b> ${esc(c.titulo)}</label></summary>
-      <div class="temas-sel">${c.secciones.map(([k, t]) => `<label><input type="checkbox" data-tema="${c.cap}:${k}"> ${k} ${esc(t)}</label>`).join("")}</div></details>`).join("");
+    const caps = LIBRO.map(c => { const total = deOpcion(c).length;
+      return `<details class="cap-sel"><summary><label><input type="checkbox" data-cap="${c.cap}"${total ? "" : " disabled"}> <b>Capítulo ${c.cap}.</b> ${esc(c.titulo)} <small class="cuenta">${total ? total + " preguntas" : "sin preguntas de opción múltiple"}</small></label></summary>
+      <div class="temas-sel">${c.secciones.map(([k, t]) => { const n = deOpcion(c, k).length;
+        return `<label${n ? "" : ' class="apagado"'}><input type="checkbox" data-tema="${c.cap}:${k}"${n ? "" : " disabled"}> ${k} ${esc(t)} <small class="cuenta">${n}</small></label>`; }).join("")}</div></details>`; }).join("");
     const hist = leer(HISTL, []);
     pintar(migas([["Aula virtual", "portada"], ["Simulador de lecciones"]]) + `<h2 class="titulo">Arma tu lección</h2>
       <div class="config"><section class="panel"><h3>1. Temas</h3>
@@ -139,32 +143,24 @@
         <section class="panel"><h3>2. Preguntas y tiempo</h3>
           <label class="campo">Cantidad de preguntas<input type="number" id="lec-n" min="1" max="100" value="10"></label>
           <label class="campo">Tiempo (minutos)<input type="number" id="lec-min" min="1" max="300" value="30"></label>
-          <h3 style="margin-top:18px">3. De dónde salen</h3>
-          <label class="casilla"><input type="checkbox" id="lec-prop" checked> Ejercicios propuestos</label>
-          <label class="casilla"><input type="checkbox" id="lec-ejem" checked> Ejemplos resueltos (con la solución del libro)</label>
-          <label class="casilla"><input type="checkbox" id="lec-opc"> Solo preguntas de opción múltiple (se califican solas)</label>
           <p class="origen" id="lec-disp"></p>
           <button class="btn fuerte" data-acc="empezar" id="lec-ir" style="width:100%;margin-top:6px">Empezar la lección</button>
-          <p class="origen">Las preguntas de opción múltiple se califican solas. En las demás, al entregar ves la respuesta o la solución del libro y tú marcas si la tuviste bien.</p></section></div>
+          <p class="origen">Todas las preguntas son de opción múltiple, tomadas al azar de los ejercicios del libro. Al entregar ves tu calificación y el solucionario de la lección.</p></section></div>
       ${hist.length ? `<section class="seccion"><h3>Tus últimas lecciones</h3><table class="intentos"><thead><tr><th>Fecha</th><th>Temas</th><th>Aciertos</th><th>Calificación</th><th>Tiempo</th></tr></thead><tbody>
-        ${hist.slice(0, 8).map(i => `<tr><td>${new Date(i.f).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" })}</td><td>${i.temas}</td><td>${i.a} de ${i.n}${i.p ? ` (${i.p} sin calificar)` : ""}</td><td><b>${Math.round(i.a / i.n * 100)}</b>/100</td><td>${mmss(i.t)}</td></tr>`).join("")}</tbody></table></section>` : ""}`, "Simulador de lecciones");
+        ${hist.slice(0, 8).map(i => `<tr><td>${new Date(i.f).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" })}</td><td>${i.temas}</td><td>${i.a} de ${i.n}</td><td><b>${Math.round(i.a / i.n * 100)}</b>/100</td><td>${mmss(i.t)}</td></tr>`).join("")}</tbody></table></section>` : ""}`, "Simulador de lecciones");
     disponibles();
   }
   function bolsa() {
-    const temas = new Set([...cuerpo.querySelectorAll("[data-tema]:checked")].map(i => i.dataset.tema));
-    const prop = $("lec-prop").checked, ejem = $("lec-ejem").checked, opc = $("lec-opc").checked, out = [];
-    for (const c of LIBRO) {
-      if (prop) for (const p of c.propuestos) if (temas.has(`${c.cap}:${p.s}`) && sirve(p, opc)) out.push({ ...p, cap: c.cap, tipo: "p" });
-      if (ejem && !opc) for (const e of c.ejemplos) if (temas.has(`${c.cap}:${e.s}`) && e.hs) out.push({ ...e, cap: c.cap, tipo: "e" });
-    }
+    const temas = new Set([...cuerpo.querySelectorAll("[data-tema]:checked")].map(i => i.dataset.tema)), out = [];
+    for (const c of LIBRO) for (const p of c.propuestos) if (p.r && temas.has(`${c.cap}:${p.s}`)) out.push({ ...p, cap: c.cap });
     return { out, temas };
   }
   function disponibles() {
     if (!$("lec-disp")) return;
     const { out, temas } = bolsa();
     for (const c of cuerpo.querySelectorAll("[data-cap]")) {
-      const hijos = [...c.closest("details").querySelectorAll("[data-tema]")], n = hijos.filter(h => h.checked).length;
-      c.checked = n === hijos.length; c.indeterminate = n > 0 && n < hijos.length;
+      const hijos = [...c.closest("details").querySelectorAll("[data-tema]:not(:disabled)")], n = hijos.filter(h => h.checked).length;
+      c.checked = n > 0 && n === hijos.length; c.indeterminate = n > 0 && n < hijos.length;
     }
     $("lec-disp").textContent = !temas.size ? "Elige al menos un tema." : `Con lo elegido hay ${out.length} pregunta${out.length === 1 ? "" : "s"} disponible${out.length === 1 ? "" : "s"}.`;
     $("lec-ir").disabled = !out.length;
@@ -174,12 +170,12 @@
     if (!out.length) return;
     for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
     const n = Math.max(1, Math.min(out.length, parseInt($("lec-n").value, 10) || 10)), min = Math.max(1, Math.min(300, parseInt($("lec-min").value, 10) || 30));
-    lec = { ps: out.slice(0, n), resp: {}, nota: {}, propia: {}, inicio: Date.now(), dur: min * 60, fin: null, actual: 0, temas: temas.size };
-    pregunta(); reloj(); clearInterval(tic); tic = setInterval(reloj, 500);
+    lec = { ps: out.slice(0, n), resp: {}, inicio: Date.now(), dur: min * 60, fin: null, temas: temas.size };
+    hoja(); reloj(); clearInterval(tic); tic = setInterval(reloj, 500);
   }
 
-  // ---------- lección en curso ----------
-  const nombreDe = p => p.tipo === "e" ? `Ejemplo ${p.cap}.${p.n}` : `Capítulo ${p.cap} · ejercicio ${p.n}`;
+  // ---------- lección en curso: todas las preguntas en una sola hoja ----------
+  const nombreDe = p => `Capítulo ${p.cap} · ejercicio ${p.n}`;
   const temaDe = p => { const s = cap(p.cap).secciones.find(x => x[0] === p.s); return s ? `${s[0]} ${s[1]}` : ""; };
   const restante = () => lec.dur - (Date.now() - lec.inicio) / 1000;
   function reloj() {
@@ -188,58 +184,47 @@
     $("aula-reloj").textContent = mmss(r); $("aula-reloj").classList.toggle("poco", r <= 60);
     if (r <= 0) entregar(true);
   }
-  function anotar() { const t = $("lec-texto"); if (t && lec && !lec.fin) { if (t.value.trim()) lec.nota[lec.actual] = t.value; else delete lec.nota[lec.actual]; } }
-  function pregunta() {
-    const i = lec.actual, p = lec.ps[i], N = lec.ps.length;
-    const contestada = k => lec.resp[k] || lec.nota[k];
-    const entrada = p.r
-      ? `<div class="opciones" role="radiogroup" aria-label="Tu respuesta">${[...LETRAS.slice(0, p.o || 5)].map(l => `<button class="opcion" role="radio" data-resp="${l}" aria-checked="${lec.resp[i] === l}">${l.toLowerCase()})</button>`).join("")}</div>`
-      : `<label class="campo" style="margin-top:16px">Tu respuesta (al entregar la comparas con la del libro)<textarea id="lec-texto" rows="3" placeholder="Escribe aquí tu resultado final">${esc(lec.nota[i] || "")}</textarea></label>`;
-    pintar(`<div class="examen" style="padding:0"><section class="hoja"><div class="cab-preg"><span class="num">Pregunta ${i + 1} de ${N}</span><span class="tema">${esc(temaDe(p))}</span></div>
-        ${img(p.id, p.h, "Enunciado de la pregunta " + (i + 1))}<p class="desliza">↔ Desliza la pregunta hacia los lados para verla completa.</p>${entrada}
-        <div class="nav-preg"><button class="btn" data-acc="ir:${i - 1}"${i ? "" : " disabled"}>← Anterior</button><button class="btn fuerte" data-acc="${i === N - 1 ? "entregar" : "ir:" + (i + 1)}">${i === N - 1 ? "Revisar y entregar" : "Siguiente →"}</button></div></section>
-      <aside class="lado"><div class="panel"><h3>Preguntas</h3><div class="mapa">${lec.ps.map((_, k) => `<button data-acc="ir:${k}" class="${contestada(k) ? "resp " : ""}${k === i ? "act" : ""}">${k + 1}</button>`).join("")}</div></div>
-        <div class="panel"><h3>Avance</h3><b>${lec.ps.filter((_, k) => contestada(k)).length}</b> de ${N} respondidas</div></aside></div>`, "Lección");
+  const letras = (p, k) => [...LETRAS.slice(0, p.o || 5)].map(l => `<button class="opcion" role="radio" data-resp="${k}:${l}" aria-checked="${lec.resp[k] === l}">${l.toLowerCase()})</button>`).join("");
+  function avance() {
+    const N = lec.ps.length, hechas = Object.keys(lec.resp).length;
+    for (const el of cuerpo.querySelectorAll(".lec-avance")) el.innerHTML = `<b>${hechas}</b> de ${N} respondidas`;
+  }
+  function hoja() {
+    const N = lec.ps.length;
+    pintar(`<p class="origen lec-avance" style="margin:0 0 14px;font-size:.95rem"></p>` + lec.ps.map((p, k) => `<article class="revision" id="lp-${k}"><header><span class="num">Pregunta ${k + 1} de ${N}</span><span class="tema">${esc(temaDe(p))}</span></header>
+        <div class="cuerpo">${img(p.id, p.h, "Enunciado de la pregunta " + (k + 1))}<p class="desliza">↔ Desliza la pregunta hacia los lados para verla completa.</p>
+        <div class="opciones" role="radiogroup" aria-label="Tu respuesta a la pregunta ${k + 1}">${letras(p, k)}</div></div></article>`).join("")
+      + `<div class="acciones" style="justify-content:space-between;align-items:center"><span class="lec-avance"></span><button class="btn ambar" data-acc="entregar" style="font-size:1.05rem;padding:13px 24px">Entregar la lección</button></div>`, "Lección");
+    avance();
   }
   function entregar(porTiempo) {
     if (!lec || lec.fin) return;
-    anotar();
     if (!porTiempo) {
-      const faltan = lec.ps.filter((_, k) => !(lec.resp[k] || lec.nota[k])).length;
-      if (!confirm((faltan ? `Te faltan ${faltan} pregunta${faltan === 1 ? "" : "s"} por responder. ` : "") + "¿Entregar la lección? Ya no podrás cambiar tus respuestas.")) return;
+      const faltan = lec.ps.length - Object.keys(lec.resp).length;
+      if (!confirm((faltan ? `Te falta${faltan === 1 ? "" : "n"} ${faltan} pregunta${faltan === 1 ? "" : "s"} por responder. ` : "") + "¿Entregar la lección? Ya no podrás cambiar tus respuestas.")) return;
     }
     clearInterval(tic);
-    lec.fin = Math.min(Date.now(), lec.inicio + lec.dur * 1000); lec.porTiempo = !!porTiempo; lec.reg = Date.now();
-    registrar(); resultado();
-  }
-  const estado = k => { const p = lec.ps[k]; return p.r ? (!lec.resp[k] ? "nada" : lec.resp[k] === p.r ? "ok" : "mal") : (lec.propia[k] || "pend"); };
-  function registrar() {
-    const N = lec.ps.length, es = lec.ps.map((_, k) => estado(k));
-    const h = leer(HISTL, []).filter(x => x.id !== lec.reg);
-    h.unshift({ id: lec.reg, f: lec.fin, temas: lec.temas, n: N, a: es.filter(e => e === "ok").length, p: es.filter(e => e === "pend").length, t: Math.round((lec.fin - lec.inicio) / 1000) });
-    guardar(HISTL, h.slice(0, 30));
-  }
-  function cabecera() {
-    const N = lec.ps.length, es = lec.ps.map((_, k) => estado(k)), ok = es.filter(e => e === "ok").length, pend = es.filter(e => e === "pend").length;
-    return `<div class="grande"><span>${Math.round(ok / N * 100)}</span><small>/100</small></div>
-      <div><h2>Lección terminada</h2><p>${ok} de ${N} respuestas correctas${lec.porTiempo ? " · se entregó al terminarse el tiempo" : ""} · tiempo usado ${mmss((lec.fin - lec.inicio) / 1000)}</p>
-      <p>${pend ? `Te falta${pend === 1 ? "" : "n"} <b>${pend}</b> pregunta${pend === 1 ? "" : "s"} por calificar: compara tu respuesta con la del libro y marca si la tuviste bien.` : "Todas las preguntas están calificadas."}</p></div>`;
+    lec.fin = Math.min(Date.now(), lec.inicio + lec.dur * 1000); lec.porTiempo = !!porTiempo;
+    const N = lec.ps.length, ok = lec.ps.filter((p, k) => lec.resp[k] === p.r).length;
+    const h = leer(HISTL, []); h.unshift({ f: lec.fin, temas: lec.temas, n: N, a: ok, t: Math.round((lec.fin - lec.inicio) / 1000) }); guardar(HISTL, h.slice(0, 30));
+    resultado();
   }
   function resultado() {
+    const N = lec.ps.length, es = lec.ps.map((p, k) => !lec.resp[k] ? "nada" : lec.resp[k] === p.r ? "ok" : "mal");
+    const ok = es.filter(e => e === "ok").length, mal = es.filter(e => e === "mal").length;
+    const clave = lec.ps.map((p, k) => `<a class="${es[k]}" href="#lrev-${k}"><b>${k + 1}. ${p.r.toLowerCase()})</b>${es[k] === "ok" ? "✓ correcta" : es[k] === "mal" ? "✗ marcaste " + lec.resp[k].toLowerCase() + ")" : "— en blanco"}</a>`).join("");
     const tarjetas = lec.ps.map((p, k) => {
-      const e = estado(k), sello = { ok: "✓ Correcta", mal: "✗ Incorrecta", nada: "— En blanco", pend: "Por calificar" }[e];
-      let medio;
-      if (p.r) medio = `<div class="letras">${[...LETRAS.slice(0, p.o || 5)].map(l => `<span class="${l === p.r ? "correcta" : l === lec.resp[k] ? "tuya-mal" : ""}">${l.toLowerCase()})</span>`).join("")}</div>`;
-      else medio = `<p class="tuya"><b>Tu respuesta:</b> ${lec.nota[k] ? esc(lec.nota[k]) : "<i>no escribiste nada</i>"}</p>
-        <details class="sol" open><summary>${p.tipo === "e" ? "Solución del libro" : "Respuesta del libro"}</summary>${p.tipo === "p" ? `<p class="origen">La respuesta empieza en el número resaltado.</p>` : ""}${img(p.id + (p.tipo === "e" ? "s" : "r"), p.tipo === "e" ? p.hs : p.hr, "Respuesta de la pregunta " + (k + 1))}</details>
-        <div class="acciones" style="margin:14px 0 0"><button class="btn${e === "ok" ? " verde" : ""}" data-acc="propia:${k}:ok">✓ La tuve bien</button><button class="btn${e === "mal" ? " roja" : ""}" data-acc="propia:${k}:mal">✗ La tuve mal</button></div>`;
-      return `<article class="revision ${e === "pend" ? "nada" : e}" id="lrev-${k}"><header><span class="num">${k + 1}</span><span class="sello">${sello}</span><span class="tema" style="margin-left:auto">${esc(nombreDe(p))} · ${esc(temaDe(p))}</span></header>
-        <div class="cuerpo">${img(p.id, p.h, "Enunciado de la pregunta " + (k + 1))}${medio}</div></article>`; }).join("");
-    const y = window.scrollY, primera = !cuerpo.querySelector("#lec-nota");
-    pintar(`<section class="nota" id="lec-nota" style="margin-bottom:18px">${cabecera()}</section>
+      const e = es[k], tuya = lec.resp[k];
+      return `<article class="revision ${e}" id="lrev-${k}"><header><span class="num">${k + 1}</span><span class="sello">${{ ok: "✓ Correcta", mal: "✗ Incorrecta", nada: "— En blanco" }[e]}</span>
+          <span>${e === "mal" ? `Marcaste <b>${tuya.toLowerCase()})</b> · ` : ""}Respuesta correcta: <b>${p.r.toLowerCase()})</b></span><span class="tema" style="margin-left:auto">${esc(nombreDe(p))} · ${esc(temaDe(p))}</span></header>
+        <div class="cuerpo">${img(p.id, p.h, "Enunciado de la pregunta " + (k + 1))}
+          <div class="letras">${[...LETRAS.slice(0, p.o || 5)].map(l => `<span class="${l === p.r ? "correcta" : l === tuya ? "tuya-mal" : ""}">${l.toLowerCase()})</span>`).join("")}</div></div></article>`; }).join("");
+    pintar(`<section class="nota" style="margin-bottom:18px"><div class="grande"><span>${Math.round(ok / N * 100)}</span><small>/100</small></div>
+        <div><h2>Lección terminada</h2><p>${ok} de ${N} respuestas correctas${lec.porTiempo ? " · se entregó al terminarse el tiempo" : ""}</p>
+        <p>${mal} incorrecta${mal === 1 ? "" : "s"} · ${N - ok - mal} en blanco · tiempo usado ${mmss((lec.fin - lec.inicio) / 1000)}</p></div></section>
       <div class="acciones"><button class="btn fuerte" data-acc="leccion">Armar otra lección</button><button class="btn" data-acc="portada">Volver al aula</button></div>
+      <h3 style="margin-bottom:12px">Solucionario de la lección</h3><div class="clave">${clave}</div>
       <h3 style="margin-bottom:12px">Revisión pregunta por pregunta</h3>${tarjetas}`, "Resultado de la lección");
-    if (!primera) window.scrollTo(0, y);
   }
 
   // ---------- eventos ----------
@@ -254,7 +239,12 @@
       return;
     }
     const r = e.target.closest("[data-resp]");
-    if (r && lec && !lec.fin) { const i = lec.actual; if (lec.resp[i] === r.dataset.resp) delete lec.resp[i]; else lec.resp[i] = r.dataset.resp; pregunta(); return; }
+    if (r && lec && !lec.fin) {
+      const [k, l] = r.dataset.resp.split(":");
+      if (lec.resp[k] === l) delete lec.resp[k]; else lec.resp[k] = l;
+      for (const o of r.parentElement.children) o.setAttribute("aria-checked", String(lec.resp[k] === o.dataset.resp.split(":")[1]));
+      avance(); return;
+    }
     const b = e.target.closest("[data-acc]");
     if (!b) return;
     const [acc, a, c, d] = b.dataset.acc.split(":");
@@ -262,19 +252,16 @@
     else if (acc === "cap") capitulo(+a);
     else if (acc === "tema") tema(+a, c, d);
     else if (acc === "leccion") configurar();
-    else if (acc === "sel") { cuerpo.querySelectorAll("[data-tema]").forEach(i => i.checked = a === "todo"); disponibles(); }
+    else if (acc === "sel") { cuerpo.querySelectorAll("[data-tema]:not(:disabled)").forEach(i => i.checked = a === "todo"); disponibles(); }
     else if (acc === "empezar") empezar();
-    else if (acc === "ir") { anotar(); lec.actual = Math.max(0, Math.min(lec.ps.length - 1, +a)); pregunta(); }
     else if (acc === "entregar") entregar(false);
-    else if (acc === "propia") { lec.propia[+a] = c; registrar(); resultado(); }
   });
   cuerpo.addEventListener("change", e => {
     const t = e.target;
     if (t.dataset.hecho) { const h = hechos(); t.checked ? h.add(t.dataset.hecho) : h.delete(t.dataset.hecho); guardar(HECHOS, [...h]); }
-    else if (t.dataset.cap) { t.closest("details").querySelectorAll("[data-tema]").forEach(i => i.checked = t.checked); disponibles(); }
-    else if (t.dataset.tema || ["lec-prop", "lec-ejem", "lec-opc"].includes(t.id)) disponibles();
+    else if (t.dataset.cap) { t.closest("details").querySelectorAll("[data-tema]:not(:disabled)").forEach(i => i.checked = t.checked); disponibles(); }
+    else if (t.dataset.tema) disponibles();
   });
-  cuerpo.addEventListener("input", e => { if (e.target.id === "lec-texto") anotar(); });
   $("aula-entregar").onclick = () => entregar(false);
   window.addEventListener("beforeunload", e => { if (lec && !lec.fin) { e.preventDefault(); e.returnValue = ""; } });
 
